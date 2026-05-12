@@ -1,4 +1,4 @@
-module reg_unit #(parameter N = 8) (
+module reg_unit #(parameter N = 16) (
 	input[N - 1:0] d,
 	input clk,
 	input reg_tri,
