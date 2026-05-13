@@ -14,7 +14,6 @@ module processor #(
 	wire[N - 1:0] data_bus, alu_a, alu_out, to_data_bus;
 	wire[opcode_size/2 - 1:0] opcode, imm; 
 	wire[opcode_size/2 - 1:0] dmem_addr, pc_addr;
-	wire fsm_en;
 	wire[opcode_size - 1:0] cur_instruction;
 	wire[3:0] fsm_state;
 	wire a_en;
