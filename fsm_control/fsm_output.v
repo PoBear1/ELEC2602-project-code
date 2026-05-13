@@ -25,7 +25,7 @@ module fsm_output #(
 	output reg imm_data_en,
 	output reg done
 );
-	always @(state, cur_in) begin
+	always @(state, cur_in, status) begin
 		r_en         <= 0;
 		r_out        <= 0;
 		a_en         <= 0;
@@ -151,6 +151,7 @@ module fsm_output #(
 					if(!status[0]) begin
 						jmp_en 		 <= 1;
 						imm_data_en  <= 1;
+						dmem_bus_sel <= 1;
 					end
 					pc_en <= 1;
 				end
@@ -160,6 +161,7 @@ module fsm_output #(
 					if(status[0]) begin
 						jmp_en 		 <= 1;
 						imm_data_en  <= 1;
+						dmem_bus_sel <= 1;
 					end
 					pc_en <= 1;
 				end
@@ -177,7 +179,6 @@ module fsm_output #(
 					dmem_en			   <= 1;
 					r_out[block] 	   <= 1;
 					r_out[block - 1:0] <= cur_in[block - 1:0];
-					imm_data_en 	   <= 1;
 					pc_en	    	   <= 1;
 				end
 			end 
