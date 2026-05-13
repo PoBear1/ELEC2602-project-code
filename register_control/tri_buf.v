@@ -7,7 +7,7 @@ module tri_buf #(parameter N = 8) (
 		if (en) begin
 			b <= a;
 		end else begin
-			b <= 1'bz;
+			b <= z;
 		end
 	end
 endmodule

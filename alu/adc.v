@@ -7,9 +7,7 @@ module adc #(parameter N = 8)(
 	output z, 
 	// status reg neg
 	output n,
-	// status reg signed, i.e. are we dealing with signed 
-	output s,
-	// signed overflow 
+	// signed overflow
 	output o
 );
 	wire[N:0] carry;
@@ -18,7 +16,6 @@ module adc #(parameter N = 8)(
 	assign z = (x == 0);
 	assign o = (a[N - 1] & b[N - 1] & (~x[N - 1])) | ((~a[N - 1]) & (~b[N - 1]) & x[N - 1]);
 	assign n = (x[N - 1] == 1);
-	assign s = n ^ o;
 	genvar i;
 	generate
 		for(i = 0; i < N; i = i + 1) begin : full_add_block
