@@ -77,7 +77,7 @@ module processor #(
 
 	// program counter
 	pc #(
-		.N(opcode_size)
+		.N(imm_l)
 	) pc_reg(
 		.clk(clock),
 		.rst(reset),

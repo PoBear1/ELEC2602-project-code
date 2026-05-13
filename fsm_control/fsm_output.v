@@ -47,6 +47,7 @@ module fsm_output #(
 				r_en[block]		  <= 1;
 				r_en[block - 1:0] <= cur_in[block - 1:0];
 				imm_data_en       <= 1;
+				dmem_bus_sel      <= 1;
 				pc_en             <= 1;
 			end else if(cur_in[op_size - 1:op_size - in_size] == 1) begin
 				// mov
@@ -100,13 +101,13 @@ module fsm_output #(
 				end else if(state == 3) begin
 					alu_mode <= 1;
 					r_out[block]	   <= 1;
-					r_out[block - 1:0] <= cur_in[block - 1:0];
+					r_out[block - 1:0] <= cur_in[2 * block - 1:block];
 					g_en 			   <= 1;
 					status_en		   <= 1;
 				end else if(state == 4) begin
 					g_out			   <= 1;
 					r_en[block]		   <= 1;
-					r_en[block - 1:0]  <= cur_in[block - 1:0];
+					r_en[block - 1:0]  <= cur_in[2 * block - 1:block];
 					pc_en              <= 1;
 				end
 			end else if(cur_in[op_size - 1:op_size - in_size] == 5) begin
