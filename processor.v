@@ -2,10 +2,10 @@ module processor #(
 	parameter block = 4,
 	parameter num_regs = 16, 
 	parameter alu_modes = 4,
-	parameter opcode_size = 32,
 	parameter in_size = 4,
-	parameter N = 16,
-	parameter imm_l = 16,
+	parameter N = 8,
+	parameter imm_l = N,
+	parameter opcode_size = 16 + N,
 	parameter mem_len = 1 << imm_l
 ) (
 	input clock,
