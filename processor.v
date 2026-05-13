@@ -4,34 +4,35 @@ module processor #(
 	parameter alu_modes = 4,
 	parameter opcode_size = 32,
 	parameter in_size = 4,
-	parameter N = 16
+	parameter N = 16,
+	parameter imm_l = 16,
+	parameter mem_len = 1 << imm_l
 ) (
 	input clock,
 	input reset
 );
-	wire[N - 1:0] data_bus;
+	wire[N - 1:0] data_bus, alu_a, alu_out, to_data_bus;
 	wire[opcode_size/2 - 1:0] opcode, imm; 
-	wire[block - 1:0] dmem_addr, pc_addr;
+	wire[opcode_size/2 - 1:0] dmem_addr, pc_addr;
 	wire fsm_en;
 	wire[opcode_size - 1:0] cur_instruction;
 	wire[3:0] fsm_state;
-	wire[block - 1:0] r_en, r_out;
 	wire a_en;
 	wire g_en, g_out;
 	wire dmem_en, dmem_out;
-	wire pmem_en, imm_en, opcode_en;
-	wire reg_tri, reg_en, reg_num_tri, reg_num_en;
-	wire pc_en, pc_out, jmp_en;
-	wire[opcode_size - 1:0] pc_val, jmp_offset;
+	wire reg_tri, reg_en;
+	wire[block - 1:0] reg_num_tri, reg_num_en;
+	wire pc_en, jmp_en;
 	wire[alu_modes - 1:0] alu_mode;
 	wire status_en, status_out;
-	wire dmem_bus_sel;
+	wire[3:0] stat_in, alu_stat;
+	wire dmem_bus_sel, imm_data_en;
 	wire done;
 
 	// dmem
 	reg_block #(
-		.n(block),
-		.regs(num_regs),
+		.n(imm_l),
+		.regs(mem_len),
 		.N(N)
 	) dmem(
 		.d(data_bus),
@@ -44,77 +45,138 @@ module processor #(
 
 	// pmem
 	reg_block #(
-		.n(block),
-		.regs(num_regs),
+		.n(imm_l),
+		.regs(mem_len),
 		.N(opcode_size)
 	) pmem(
 		.d(0),
 		.clk(clock),
-		.reg_tri({pmem_en, pc_addr}),
+		.reg_tri({1'b1, pc_addr}),
 		.reg_en(0),
 		.reg_rst(reset),
 		.w(cur_instruction)
 	);
 
-	// opcode/imm reg
+	// opcode/imm wires
 	assign opcode = cur_instruction[opcode_size - 1:opcode_size/2]; 
 	assign imm = cur_instruction[opcode_size/2 - 1:0];
 
 	// demux imm to either bus or dmem
-	demux #(.N(N)) demuxer()
+	demux #(.N(N)) demuxer(
+		.in(imm),
+		.sel(dmem_bus_sel),
+		.path_0(dmem_addr),
+		.path_1(to_data_bus)
+	);
+
+	tri_buf #(.N(N)) demux_buf(
+		.a(to_data_bus),
+		.en(imm_data_en),
+		.b(data_bus)
+	);
 
 	// program counter
 	pc #(
 		.N(opcode_size)
-	) pc_reg (
+	) pc_reg(
 		.clk(clock),
 		.rst(reset),
 		.pc_en(pc_en),
-		.pc_out(pc_out),
 		.jmp_en(jmp_en),
 		.jmp_offset(data_bus),
-		.w(pc_val)
+		.w(pc_addr)
 	);
 
-	// 
+	// registers
 	reg_block #(
 		.n(block),
 		.regs(num_regs),
 		.N(N)
-	) registers (
+	) registers(
 		.d(data_bus),
 		.clk(clock),
-		.reg_tri({})
+		.reg_tri({reg_tri, reg_num_tri}),
+		.reg_en({reg_en, reg_num_en}),
+		.reg_rst(reset),
+		.w(data_bus)
 	);
 
+	reg_unit #(
+		.N(N)
+	) A_reg(
+		.d(data_bus),
+		.clk(clock),
+		.reg_tri(1),
+		.reg_en(a_en),
+		.reg_rst(reset),
+		.w(alu_a)
+	);
+
+	reg_unit #(
+		.N(N)
+	) G_reg(
+		.d(alu_out),
+		.clk(clock),
+		.reg_tri(g_out),
+		.reg_en(g_en),
+		.reg_rst(reset),
+		.w(data_bus)
+	);
+
+	// status register
+	status_reg #(
+		.N(4)
+	) stat_reg(
+		.d(alu_stat),
+		.clk(clock),
+		.reg_tri(status_out),
+		.reg_en(status_en),
+		.reg_rst(reset),
+		.q(stat_in),
+		.w(data_bus)
+	);
+
+	// alu
+	alu #(
+		.N(N), 
+		.modes(alu_modes)
+	) calculator(
+		.a(alu_a),
+		.b(data_bus),
+		.alu_mode(alu_mode),
+		.prev_stat(stat_in),
+		.out(alu_out),
+		.status(alu_stat)
+	);
+
+	// controller
 	fsm_control #(
 		.block(block),
 		.alu_modes(alu_modes),
-		.opcode_size(opcode_size),
+		.opcode_size(opcode_size/2),
 		.in_size(in_size),
 		.N(N)
 	) controller(
 		.clock(clock),
 		.rst(reset),
-		.en(fsm_en),
+		.en(1),
 		.cur_instruction(opcode),
+		.status(stat_in),
 		.state(fsm_state),
-		.r_en(r_en),
-		.r_out(r_out),
+		.r_en({reg_en, reg_num_en}),
+		.r_out({reg_tri, reg_num_tri}),
 		.a_en(a_en),
 		.g_en(g_en),
 		.g_out(g_out),
 		.dmem_en(dmem_en),
 		.dmem_out(dmem_out),
-		.pmem_en(pmem_en),
-		.imm_en(imm_en),
-		.opcode_en(opcode_en),
 		.pc_en(pc_en),
-		.pc_out(pc_out),
+		.jmp_en(jmp_en),
 		.alu_mode(alu_mode),
 		.status_en(status_en),
 		.status_out(status_out),
 		.dmem_bus_sel(dmem_bus_sel),
+		.imm_data_en(imm_data_en),
 		.done(done)
 	);
 endmodule

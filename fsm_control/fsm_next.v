@@ -58,7 +58,7 @@ module fsm_next #(parameter op_size = 16, parameter in_size = 8) (
 			end
 		end else if(cur_in[op_size - 1:op_size - in_size] == 7) begin
 			// jmp, has two states
-			if(state < 4) begin
+			if(state < 2) begin
 				next_state <= state + 1;
 			end else begin
 				next_state <= 0;

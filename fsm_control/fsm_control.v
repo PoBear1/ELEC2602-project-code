@@ -1,15 +1,16 @@
 module fsm_control #(
 	parameter block = 4,
 	parameter alu_modes = 4,
-	parameter opcode_size = 32,
-	parameter in_size = 4,
-	parameter N = 16
+	parameter opcode_size = 16,
+	parameter in_size = 8,
+	parameter N = 16,
+	parameter imm_l = 16
 ) (
 	input clock,
 	input rst,
 	input en,
 	input[opcode_size - 1:0] cur_instruction,
-	input status,
+	input[3:0] status,
 	output[3:0] state,
 	output[block:0] r_en,
 	output[block:0] r_out,
@@ -18,15 +19,14 @@ module fsm_control #(
 	output g_out,
 	output dmem_en,
 	output dmem_out,
-	output pmem_en,
-	output imm_en,
-	output opcode_en,
 	output pc_en,
-	output pc_out,
-	output done,
+	output jmp_en,
 	output[alu_modes - 1:0] alu_mode,
 	output status_en,
-	output status_out
+	output status_out,
+	output dmem_bus_sel,
+	output imm_data_en,
+	output done
 );
 	wire[3:0] next_state;
 	fsm_next #(.op_size(opcode_size), .in_size(in_size)) next (
@@ -42,7 +42,7 @@ module fsm_control #(
 		.next_state(next_state),
 		.state(state)
 	);
-	fsm_output #(.block(block), .op_size(opcode_size), .in_size(in_size), .alu_modes(alu_modes), .N(N)) out(
+	fsm_output #(.block(block), .op_size(opcode_size), .in_size(in_size), .alu_modes(alu_modes), .N(N), .imm_l(imm_l)) out(
 		.cur_in(cur_instruction),
 		.status(status),
 		.state(state),
@@ -53,14 +53,13 @@ module fsm_control #(
 		.g_out(g_out),
 		.dmem_en(dmem_en),
 		.dmem_out(dmem_out),
-		.pmem_en(pmem_en),
-		.imm_en(imm_en),
-		.opcode_en(opcode_en),
 		.pc_en(pc_en),
-		.pc_out(pc_out),
-		.done(done),
+		.jmp_en(jmp_en),
 		.alu_mode(alu_mode),
 		.status_en(status_en),
-		.status_out(status_out)
+		.status_out(status_out),
+		.dmem_bus_sel(dmem_bus_sel),
+		.imm_data_en(imm_data_en),
+		.done(done)
 	);
 endmodule
