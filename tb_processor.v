@@ -12,10 +12,10 @@
 //
 //   Opcode  Mnemonic       Operation
 //   ------  -------------- --------------------
-//      0    LDI  Rd, imm   Rd = imm
-//      1    MOV  Rx, Ry    Rx = Ry
-//      2    ADD  Rx, Ry    Rx = Rx + Ry
-//      4    SUB  Rx, Ry    Rx = Rx - Ry
+//      1    LDI  Rd, imm   Rd = imm
+//      2    MOV  Rx, Ry    Rx = Ry
+//      3    ADD  Rx, Ry    Rx = Rx + Ry
+//      5    SUB  Rx, Ry    Rx = Rx - Ry
 // ============================================================
 
 module tb_processor;
@@ -35,22 +35,22 @@ module tb_processor;
     function [31:0] ldi;
         input [3:0]  rd;
         input [15:0] imm;
-        ldi = {4'd0, 4'd0, 4'd0, rd, imm};
+        ldi = {4'd1, 4'd0, 4'd0, rd, imm};
     endfunction
 
     function [31:0] mov;
         input [3:0] rx, ry;
-        mov = {4'd1, 4'd0, rx, ry, 16'd0};
+        mov = {4'd2, 4'd0, rx, ry, 16'd0};
     endfunction
 
     function [31:0] add;
         input [3:0] rx, ry;
-        add = {4'd2, 4'd0, rx, ry, 16'd0};
+        add = {4'd3, 4'd0, rx, ry, 16'd0};
     endfunction
 
     function [31:0] sub;
         input [3:0] rx, ry;
-        sub = {4'd4, 4'd0, rx, ry, 16'd0};
+        sub = {4'd5, 4'd0, rx, ry, 16'd0};
     endfunction
 
     // ---- Test program ----
@@ -114,19 +114,18 @@ module tb_processor;
             $display("[%0t]   bus = %0d (0x%04h)", $time, dut.data_bus, dut.data_bus);
     end
 
-    // Announce the start of each instruction (done falls when FSM leaves state 0)
+    // Announce start of each instruction; at negedge done the PC has not yet incremented
     always @(negedge dut.done) begin
-        if (!rst) begin
-            // PC has already incremented; current instruction is at pc_addr-1
+        if (!rst)
             $display("[%0t] -- executing PC=%0d : 0x%08h",
-                     $time, dut.pc_addr - 1, dut.pmem.mem[dut.pc_addr - 1]);
-        end
+                     $time, dut.pc_addr, dut.pmem.mem[dut.pc_addr]);
     end
 
-    // Announce completion of each instruction
+    // Announce completion; at posedge done the PC has already incremented
     always @(posedge dut.done) begin
         if (!rst)
-            $display("[%0t] -- done  PC now=%0d", $time, dut.pc_addr);
+            $display("[%0t] -- done  (was PC=%0d, next PC=%0d)",
+                     $time, dut.pc_addr - 1, dut.pc_addr);
     end
 
 endmodule
