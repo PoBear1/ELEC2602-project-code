@@ -57,11 +57,39 @@ module fsm_next #(parameter op_size = 16, parameter in_size = 8) (
 				next_state <= 0;
 			end
 		end else if(cur_in[op_size - 1:op_size - in_size] == 7) begin
-			// jmp, has two states
-			if(state < 2) begin
-				next_state <= state + 1;
-			end else begin
+			// jmp, has one state
+			if(state == 1) begin
 				next_state <= 0;
+			end else begin
+				next_state <= 1;
+			end
+		end else if(cur_in[op_size - 1:op_size - in_size] == 8) begin
+			// brne, has one state
+			if(state == 1) begin
+				next_state <= 0;
+			end else begin
+				next_state <= 1;
+			end
+		end else if(cur_in[op_size - 1:op_size - in_size] == 9) begin
+			// breq, has one state
+			if(state == 1) begin
+				next_state <= 0;
+			end else begin
+				next_state <= 1;
+			end
+		end else if(cur_in[op_size - 1:op_size - in_size] == 10) begin
+			// ld, has one state
+			if(state == 1) begin
+				next_state <= 0;
+			end else begin
+				next_state <= 1;
+			end
+		end else if(cur_in[op_size - 1:op_size - in_size] == 11) begin
+			// st, has one state
+			if(state == 1) begin
+				next_state <= 0;
+			end else begin
+				next_state <= 1;
 			end
 		end
 	end

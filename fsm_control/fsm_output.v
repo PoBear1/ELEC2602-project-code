@@ -140,9 +140,47 @@ module fsm_output #(
 			end else if(cur_in[op_size - 1:op_size - in_size] == 7) begin
 				// jmp
 				if(state == 1) begin
-					
+					jmp_en 		 <= 1;
+					imm_data_en  <= 1;
+					dmem_bus_sel <= 1;
+					pc_en		 <= 1;
 				end
-			end
+			end else if(cur_in[op_size - 1:op_size - in_size] == 8) begin
+				// brne
+				if(state == 1) begin
+					if(!status[0]) begin
+						jmp_en 		 <= 1;
+						imm_data_en  <= 1;
+					end
+					pc_en <= 1;
+				end
+			end else if(cur_in[op_size - 1:op_size - in_size] == 9) begin
+				// breq
+				if(state == 1) begin
+					if(status[0]) begin
+						jmp_en 		 <= 1;
+						imm_data_en  <= 1;
+					end
+					pc_en <= 1;
+				end
+			end else if(cur_in[op_size - 1:op_size - in_size] == 10) begin
+				// ld
+				if(state == 1) begin
+					dmem_out		  <= 1;
+					r_en[block] 	  <= 1;
+					r_en[block - 1:0] <= cur_in[block - 1:0];
+					pc_en	    	  <= 1;
+				end
+			end else if(cur_in[op_size - 1:op_size - in_size] == 11) begin
+				// st
+				if(state == 1) begin
+					dmem_en			   <= 1;
+					r_out[block] 	   <= 1;
+					r_out[block - 1:0] <= cur_in[block - 1:0];
+					imm_data_en 	   <= 1;
+					pc_en	    	   <= 1;
+				end
+			end 
 		end
 	end
 endmodule
