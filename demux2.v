@@ -3,8 +3,8 @@ module demux #(
 ) (
 	input[N - 1:0]  in,
 	input           sel,
-	output[N - 1:0] reg path_0, 
-	output[N - 1:0] reg path_1
+	output reg [N - 1:0] path_0, 
+	output reg [N - 1:0] path_1
 );
 	always @(in, sel) begin
 		if(sel == 0) begin

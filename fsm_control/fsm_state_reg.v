@@ -3,7 +3,7 @@ module fsm_state_register(
 	input rst, 
 	input enable, 
 	input[3:0] next_state, 
-	output[3:0] reg state
+	output reg[3:0] state
 );
 	always @(posedge clock or posedge rst) begin
 		if(rst) begin state <= 4'b0; end

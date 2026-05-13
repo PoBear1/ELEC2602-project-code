@@ -1,7 +1,7 @@
 module tri_buf #(parameter N = 8) (
 	input [N - 1:0] a, 
 	input en,
-	output[N - 1:0] reg b
+	output reg[N - 1:0] b
 );
 	
 	always @(en or a) begin

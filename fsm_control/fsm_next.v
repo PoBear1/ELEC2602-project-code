@@ -3,7 +3,7 @@ module fsm_next #(parameter op_size = 16, parameter in_size = 8) (
 	input[3:0] state,
 	input[op_size - 1:0] cur_in,
 	input[3:0] status,
-	output[3:0] reg next_state
+	output reg[3:0] next_state
 );
 	always @(cur_in, state, status) begin
 		next_state = 0;
