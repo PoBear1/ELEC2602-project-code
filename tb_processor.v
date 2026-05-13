@@ -1,144 +1,132 @@
 `timescale 1ns/1ps
 
 // ============================================================
-// Instruction format (32-bit):
+// 32-bit instruction encoding
+//
 //   [31:28]  4-bit opcode
 //   [27:24]  unused
-//   [23:8]   16-bit immediate  (LDI only)
-//   [7:4]    Rx  destination   (MOV / ADD / SUB)
-//   [3:0]    Ry  destination   (LDI) / source (MOV / ADD / SUB)
+//   [23:20]  Rx  – destination register  (MOV / ADD / SUB)
+//   [19:16]  Rd  – destination register  (LDI)
+//            Ry  – source register       (MOV / ADD / SUB)
+//   [15:0]   16-bit immediate            (LDI only)
 //
-//   LDI Ry, imm   opcode = 0   Ry  = imm
-//   MOV Rx, Ry    opcode = 1   Rx  = Ry
-//   ADD Rx, Ry    opcode = 2   Rx  = Rx + Ry
-//   SUB Rx, Ry    opcode = 4   Rx  = Rx - Ry
-// ============================================================
-//
-// REQUIRED FIXES before simulating:
-//   1. fsm_control.v: rename `fsm_state_reg` instantiation to
-//      `fsm_state_register` (the actual module name in fsm_state_reg.v)
-//   2. fsm_control.v: change `input[3:0] state` to `wire[3:0] state`
-//   3. processor.v: implement the module with the port list below
+//   Opcode  Mnemonic       Operation
+//   ------  -------------- --------------------
+//      0    LDI  Rd, imm   Rd = imm
+//      1    MOV  Rx, Ry    Rx = Ry
+//      2    ADD  Rx, Ry    Rx = Rx + Ry
+//      4    SUB  Rx, Ry    Rx = Rx - Ry
 // ============================================================
 
 module tb_processor;
-    localparam N = 16;
 
-    reg          clk, rst, en;
-    reg  [31:0]  instruction;
-    wire         done;
-    wire [N-1:0] bus;
+    reg clk, rst;
 
-    // Expected processor port list:
-    //   processor #(.N(N)) dut (
-    //       .clk(clk), .rst(rst), .en(en),
-    //       .instruction(instruction),
-    //       .done(done), .bus(bus)
-    //   );
-    processor #(.N(N)) dut (
-        .clk(clk),
-        .rst(rst),
-        .en(en),
-        .instruction(instruction),
-        .done(done),
-        .bus(bus)
+    processor dut (
+        .clock(clk),
+        .reset(rst)
     );
 
     initial clk = 0;
-    always #5 clk = ~clk;
+    always #5 clk = ~clk;   // 10 ns period, 100 MHz
 
-    // --------------------------------------------------------
-    // Execute one instruction; blocks until done goes high
-    // --------------------------------------------------------
-    task exec;
-        input [31:0] instr;
-        begin
-            @(negedge clk);
-            instruction = instr;
-            en = 1;
-            @(posedge clk);  // state 0 → 1
-            #1;
-            wait(!done);     // confirm FSM left idle
-            wait(done);      // wait for completion (state → 0)
-            @(negedge clk);
-            en = 0;
-        end
-    endtask
+    // ---- Instruction constructors ----
 
-    // --------------------------------------------------------
-    // Instruction builders
-    // --------------------------------------------------------
     function [31:0] ldi;
-        input [3:0]  ry;
+        input [3:0]  rd;
         input [15:0] imm;
-        ldi = {4'd0, 4'd0, imm, 4'd0, ry};
+        ldi = {4'd0, 4'd0, 4'd0, rd, imm};
     endfunction
 
     function [31:0] mov;
         input [3:0] rx, ry;
-        mov = {4'd1, 4'd0, 16'd0, rx, ry};
+        mov = {4'd1, 4'd0, rx, ry, 16'd0};
     endfunction
 
     function [31:0] add;
         input [3:0] rx, ry;
-        add = {4'd2, 4'd0, 16'd0, rx, ry};
+        add = {4'd2, 4'd0, rx, ry, 16'd0};
     endfunction
 
     function [31:0] sub;
         input [3:0] rx, ry;
-        sub = {4'd4, 4'd0, 16'd0, rx, ry};
+        sub = {4'd4, 4'd0, rx, ry, 16'd0};
     endfunction
 
-    // --------------------------------------------------------
-    // Test sequence
-    // --------------------------------------------------------
+    // ---- Test program ----
+    //
+    //  Addr  Instruction           Expected state after execution
+    //  ----  --------------------  ------------------------------
+    //   0    LDI R0, 10            R0 = 10
+    //   1    LDI R1,  5            R1 = 5
+    //   2    LDI R2,  3            R2 = 3
+    //   3    MOV R3, R0            R3 = 10
+    //   4    ADD R0, R1            R0 = 10 + 5  = 15
+    //   5    ADD R1, R2            R1 =  5 + 3  =  8
+    //   6    SUB R0, R2            R0 = 15 - 3  = 12
+    //   7    SUB R0, R3            R0 = 12 - 10 =  2
+    //   8    (halt – undefined opcode keeps FSM idle)
+
     initial begin
         $dumpfile("tb_processor.vcd");
-        $dumpvars(0, tb_processor);
+        // Dump selected hierarchy to keep VCD manageable
+        $dumpvars(0, dut.registers);
+        $dumpvars(0, dut.A_reg);
+        $dumpvars(0, dut.G_reg);
+        $dumpvars(0, dut.calculator);
+        $dumpvars(0, dut.controller);
+        $dumpvars(0, dut.pc_reg);
+        $dumpvars(1, tb_processor);   // top-level signals
 
-        rst = 1; en = 0; instruction = 32'b0;
+        rst = 1;
+
+        // Load program into pmem after $readmemh has initialised it.
+        // All other initial blocks start at time 0; #1 ensures ordering.
+        #1;
+        dut.pmem.mem[0] = ldi(4'd0, 16'd10);
+        dut.pmem.mem[1] = ldi(4'd1, 16'd5);
+        dut.pmem.mem[2] = ldi(4'd2, 16'd3);
+        dut.pmem.mem[3] = mov(4'd3, 4'd0);
+        dut.pmem.mem[4] = add(4'd0, 4'd1);
+        dut.pmem.mem[5] = add(4'd1, 4'd2);
+        dut.pmem.mem[6] = sub(4'd0, 4'd2);
+        dut.pmem.mem[7] = sub(4'd0, 4'd3);
+        dut.pmem.mem[8] = 32'hFFFF_FFFF;   // undefined opcode → FSM stays idle
+
         repeat(4) @(posedge clk);
         rst = 0;
-        @(posedge clk);
 
-        $display("=== Processor test begin ===");
+        $display("=== Processor simulation start ===");
 
-        // --- LDI: load immediates into three registers ---
-        exec(ldi(4'd0, 16'd10));
-        $display("[%0t] LDI R0, 10  ->  R0 = 10", $time);
+        // Each instruction: LDI=1 FSM state, MOV=1, ADD=3, SUB=4.
+        // 8 instructions × worst-case 4 states + overhead = ~50 cycles.
+        repeat(80) @(posedge clk);
 
-        exec(ldi(4'd1, 16'd5));
-        $display("[%0t] LDI R1, 5   ->  R1 = 5", $time);
-
-        exec(ldi(4'd2, 16'd3));
-        $display("[%0t] LDI R2, 3   ->  R2 = 3", $time);
-
-        // --- MOV: copy R0 into R3 ---
-        exec(mov(4'd3, 4'd0));
-        $display("[%0t] MOV R3, R0  ->  R3 = 10", $time);
-
-        // --- ADD ---
-        exec(add(4'd0, 4'd1));   // R0 = 10 + 5 = 15
-        $display("[%0t] ADD R0, R1  ->  R0 = 15", $time);
-
-        exec(add(4'd1, 4'd2));   // R1 = 5 + 3 = 8
-        $display("[%0t] ADD R1, R2  ->  R1 = 8", $time);
-
-        // --- SUB ---
-        exec(sub(4'd0, 4'd2));   // R0 = 15 - 3 = 12
-        $display("[%0t] SUB R0, R2  ->  R0 = 12", $time);
-
-        exec(sub(4'd0, 4'd3));   // R0 = 12 - 10 = 2
-        $display("[%0t] SUB R0, R3  ->  R0 = 2", $time);
-
-        $display("=== Test complete ===");
+        $display("=== Simulation complete ===");
         $finish;
     end
 
-    // Print bus value whenever it changes during execution
-    always @(bus) begin
-        if (!rst && !done)
-            $display("[%0t]   bus = %0d (0x%04h)", $time, bus, bus);
+    // ---- Monitors ----
+
+    // Show every bus change during active execution
+    always @(dut.data_bus) begin
+        if (!rst && dut.data_bus !== {16{1'bz}})
+            $display("[%0t]   bus = %0d (0x%04h)", $time, dut.data_bus, dut.data_bus);
+    end
+
+    // Announce the start of each instruction (done falls when FSM leaves state 0)
+    always @(negedge dut.done) begin
+        if (!rst) begin
+            // PC has already incremented; current instruction is at pc_addr-1
+            $display("[%0t] -- executing PC=%0d : 0x%08h",
+                     $time, dut.pc_addr - 1, dut.pmem.mem[dut.pc_addr - 1]);
+        end
+    end
+
+    // Announce completion of each instruction
+    always @(posedge dut.done) begin
+        if (!rst)
+            $display("[%0t] -- done  PC now=%0d", $time, dut.pc_addr);
     end
 
 endmodule

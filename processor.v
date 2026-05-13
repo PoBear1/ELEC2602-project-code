@@ -43,16 +43,12 @@ module processor #(
 	);
 
 	// pmem
-	reg_block #(
-		.n(imm_l),
-		.regs(mem_len),
-		.N(opcode_size)
+	pmem_block #(
+		.imm_l(imm_l),
+		.opcode_size(opcode_size),
+		.mem_len(mem_len)
 	) pmem(
-		.d(0),
-		.clk(clock),
-		.reg_tri({1'b1, pc_addr}),
-		.reg_en(0),
-		.reg_rst(reset),
+		.addr(pc_addr),
 		.w(cur_instruction)
 	);
 
