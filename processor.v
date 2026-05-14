@@ -25,7 +25,7 @@ module processor #(
 	wire pc_en, jmp_en;
 	wire[alu_modes - 1:0] alu_mode;
 	wire status_en, status_out;
-	wire[3:0] stat_in, alu_stat;
+	wire[7:0] stat_in, alu_stat;
 	wire dmem_bus_sel, imm_data_en;
 	wire done;
 
@@ -121,7 +121,7 @@ module processor #(
 
 	// status register
 	status_reg #(
-		.N(4)
+		.N(8)
 	) stat_reg(
 		.d(alu_stat),
 		.clk(clock),
@@ -140,9 +140,9 @@ module processor #(
 		.a(alu_a),
 		.b(data_bus),
 		.alu_mode(alu_mode),
-		.prev_stat(stat_in),
+		.prev_stat(stat_in[3:0]),
 		.out(alu_out),
-		.status(alu_stat)
+		.status(alu_stat[3:0])
 	);
 
 	// controller
@@ -157,7 +157,7 @@ module processor #(
 		.rst(reset),
 		.en(1'b1),
 		.cur_instruction(opcode),
-		.status(stat_in),
+		.status(stat_in[3:0]),
 		.state(fsm_state),
 		.r_en({reg_en, reg_num_en}),
 		.r_out({reg_tri, reg_num_tri}),

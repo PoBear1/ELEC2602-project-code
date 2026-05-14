@@ -21,7 +21,7 @@ module alu #(
 	inc #(.N(N)) incr(.a(b), .x(inc_x), .cout(inc_stat[2]), .z(inc_stat[0]), .n(inc_stat[1]), .o(inc_stat[3]));
 	dec #(.N(N)) decr(.a(b), .x(dec_x), .cout(dec_stat[2]), .z(dec_stat[0]), .n(dec_stat[1]), .o(dec_stat[3]));
 
-	always @(alu_mode, a, b, prev_stat) begin
+	always @(alu_mode, b, prev_stat, add_x, adc_x, neg_x, not_x, inc_x, dec_x, add_stat, adc_stat, inc_stat, dec_stat, neg_stat, not_stat) begin
 		out = b;
 		status = 0;
 		if(alu_mode == 1) begin

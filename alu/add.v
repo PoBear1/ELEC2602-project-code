@@ -10,5 +10,5 @@ module add #(parameter N = 8)(
 	// signed overflow
 	output o
 );
-	adc #(.N(N)) ad (.a(a), .b(b), .c(1'b0), .x(x), .cout(cout), .z(z), .n(n), .o(o));
+	adc #(.N(N)) ad (.a(a), .b(b), .c(0), .x(x), .cout(cout), .z(z), .n(n), .o(o));
 endmodule

@@ -77,15 +77,15 @@ module tb_processor;
         // Load program into pmem after $readmemh has initialised it.
         // All other initial blocks start at time 0; #1 ensures ordering.
         #1;
-        dut.pmem.mem[0] = ldi(4'd0, 8'd10);
-        dut.pmem.mem[1] = ldi(4'd1, 8'd5);
-        dut.pmem.mem[2] = ldi(4'd2, 8'd3);
-        dut.pmem.mem[3] = mov(4'd3, 4'd0);
-        dut.pmem.mem[4] = add(4'd0, 4'd1);
-        dut.pmem.mem[5] = add(4'd1, 4'd2);
-        dut.pmem.mem[6] = sub(4'd0, 4'd2);
-        dut.pmem.mem[7] = sub(4'd0, 4'd3);
-        dut.pmem.mem[8] = 32'hFFFF_FFFF;   // undefined opcode → FSM stays idle
+        // dut.pmem.mem[0] = ldi(4'd0, 8'd10);
+        // dut.pmem.mem[1] = ldi(4'd1, 8'd5);
+        // dut.pmem.mem[2] = ldi(4'd2, 8'd3);
+        // dut.pmem.mem[3] = mov(4'd3, 4'd0);
+        // dut.pmem.mem[4] = add(4'd0, 4'd1);
+        // dut.pmem.mem[5] = add(4'd1, 4'd2);
+        // dut.pmem.mem[6] = sub(4'd0, 4'd2);
+        // dut.pmem.mem[7] = sub(4'd0, 4'd3);
+        // dut.pmem.mem[8] = 32'hFFFF_FFFF;   // undefined opcode → FSM stays idle
 
         repeat(4) @(posedge clk);
         rst = 0;
