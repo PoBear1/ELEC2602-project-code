@@ -34,23 +34,23 @@ module tb_processor;
 
     function [31:0] ldi;
         input [3:0]  rd;
-        input [15:0] imm;
-        ldi = {4'd1, 4'd0, 4'd0, rd, imm};
+        input [7:0] imm;
+        ldi = {8'd1, 4'd0, rd, imm};
     endfunction
 
     function [31:0] mov;
         input [3:0] rx, ry;
-        mov = {4'd2, 4'd0, rx, ry, 16'd0};
+        mov = {8'd2, rx, ry, 8'd0};
     endfunction
 
     function [31:0] add;
         input [3:0] rx, ry;
-        add = {4'd3, 4'd0, rx, ry, 16'd0};
+        add = {8'd3, rx, ry, 8'd0};
     endfunction
 
     function [31:0] sub;
         input [3:0] rx, ry;
-        sub = {4'd5, 4'd0, rx, ry, 16'd0};
+        sub = {8'd5, rx, ry, 8'd0};
     endfunction
 
     // ---- Test program ----
@@ -70,22 +70,16 @@ module tb_processor;
     initial begin
         $dumpfile("tb_processor.vcd");
         // Dump selected hierarchy to keep VCD manageable
-        $dumpvars(0, dut.registers);
-        $dumpvars(0, dut.A_reg);
-        $dumpvars(0, dut.G_reg);
-        $dumpvars(0, dut.calculator);
-        $dumpvars(0, dut.controller);
-        $dumpvars(0, dut.pc_reg);
-        $dumpvars(1, tb_processor);   // top-level signals
+        $dumpvars(0, tb_processor);   // top-level signals
 
         rst = 1;
 
         // Load program into pmem after $readmemh has initialised it.
         // All other initial blocks start at time 0; #1 ensures ordering.
         #1;
-        dut.pmem.mem[0] = ldi(4'd0, 16'd10);
-        dut.pmem.mem[1] = ldi(4'd1, 16'd5);
-        dut.pmem.mem[2] = ldi(4'd2, 16'd3);
+        dut.pmem.mem[0] = ldi(4'd0, 8'd10);
+        dut.pmem.mem[1] = ldi(4'd1, 8'd5);
+        dut.pmem.mem[2] = ldi(4'd2, 8'd3);
         dut.pmem.mem[3] = mov(4'd3, 4'd0);
         dut.pmem.mem[4] = add(4'd0, 4'd1);
         dut.pmem.mem[5] = add(4'd1, 4'd2);

@@ -8,7 +8,11 @@ module pmem_block #(
 );
     reg[opcode_size - 1:0] mem[0:mem_len - 1];
     initial begin
-        $readmemh("program.hex", mem);
+        $readmemb("program.hex", mem);
+		$display("mem[%b] --> %b", 8'd0, mem[8'd0]);
     end
+	always @(addr) begin
+		$display("mem[%b] --> %b", addr, mem[addr]);
+	end
     assign w = mem[addr];
 endmodule
