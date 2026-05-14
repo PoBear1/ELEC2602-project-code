@@ -12,8 +12,9 @@ module processor #(
 	input reset
 );
 	wire[N - 1:0] data_bus, alu_a, alu_out, to_data_bus;
-	wire[opcode_size/2 - 1:0] opcode, imm; 
-	wire[opcode_size/2 - 1:0] dmem_addr, pc_addr;
+	wire[15:0] opcode;
+	wire[imm_l - 1:0] imm; 
+	wire[imm_l - 1:0] dmem_addr, pc_addr;
 	wire[opcode_size - 1:0] cur_instruction;
 	wire[3:0] fsm_state;
 	wire a_en;
@@ -53,8 +54,8 @@ module processor #(
 	);
 
 	// opcode/imm wires
-	assign opcode = cur_instruction[opcode_size - 1:opcode_size/2]; 
-	assign imm = cur_instruction[opcode_size/2 - 1:0];
+	assign opcode = cur_instruction[opcode_size - 1:imm_l]; 
+	assign imm = cur_instruction[imm_l - 1:0];
 
 	// demux imm to either bus or dmem
 	demux #(.N(N)) demuxer(
@@ -101,7 +102,7 @@ module processor #(
 	) A_reg(
 		.d(data_bus),
 		.clk(clock),
-		.reg_tri(1),
+		.reg_tri(1'b1),
 		.reg_en(a_en),
 		.reg_rst(reset),
 		.w(alu_a)
@@ -148,13 +149,13 @@ module processor #(
 	fsm_control #(
 		.block(block),
 		.alu_modes(alu_modes),
-		.opcode_size(opcode_size/2),
+		.opcode_size(16),
 		.in_size(in_size),
 		.N(N)
 	) controller(
 		.clock(clock),
 		.rst(reset),
-		.en(1),
+		.en(1'b1),
 		.cur_instruction(opcode),
 		.status(stat_in),
 		.state(fsm_state),
