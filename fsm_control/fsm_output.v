@@ -167,7 +167,7 @@ module fsm_output #(
 					pc_en = 1;
 				end
 			end else if(cur_in[op_size - 1:op_size - in_size] == 11) begin
-				// ld
+				// lds
 				if(state == 1) begin
 					dmem_out		  = 1;
 					r_en[block] 	  = 1;
@@ -175,14 +175,52 @@ module fsm_output #(
 					pc_en	    	  = 1;
 				end
 			end else if(cur_in[op_size - 1:op_size - in_size] == 12) begin
-				// st
+				// sts
 				if(state == 1) begin
 					dmem_en			   = 1;
 					r_out[block] 	   = 1;
 					r_out[block - 1:0] = cur_in[block - 1:0];
 					pc_en	    	   = 1;
 				end
-			end 
+			end else if(cur_in[op_size - 1:op_size - in_size] == 13) begin
+				// cp, basically sub but no loading at end
+				if(state == 1) begin
+					alu_mode = 2;
+					r_out[block]	   = 1;
+					r_out[block - 1:0] = cur_in[block - 1:0];
+					g_en 			   = 1;
+				end else if(state == 2) begin
+					g_out			   = 1;
+					a_en			   = 1;
+				end else if(state == 3) begin
+					alu_mode = 1;
+					r_out[block]	   = 1;
+					r_out[block - 1:0] = cur_in[2 * block - 1:block];
+					g_en 			   = 1;
+					status_en		   = 1;
+					pc_en              = 1;
+				end
+			end else if(cur_in[op_size - 1:op_size - in_size] == 14) begin
+				// brsh
+				if(state == 1) begin
+					if(status[0] | !status[1]) begin
+						jmp_en 		 = 1;
+						imm_data_en  = 1;
+						dmem_bus_sel = 1;
+					end
+					pc_en = 1;
+				end
+			end else if(cur_in[op_size - 1:op_size - in_size] == 15) begin
+				// brlo
+				if(state == 1) begin
+					if(status[1]) begin
+						jmp_en 		 = 1;
+						imm_data_en  = 1;
+						dmem_bus_sel = 1;
+					end
+					pc_en = 1;
+				end
+			end
 		end
 	end
 endmodule

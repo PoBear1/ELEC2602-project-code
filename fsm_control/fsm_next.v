@@ -7,12 +7,8 @@ module fsm_next #(parameter op_size = 16, parameter in_size = 8) (
 );
 	always @(cur_in, state, status) begin
 		next_state = 0;
-		$display("Should be here: %8b", cur_in[op_size - 1:op_size - in_size]);
-		$display("Actual full instruction: %16b", cur_in);
-		$display("In_size = %d", in_size);
 		if(cur_in[op_size - 1:op_size - in_size] == 8'b00000001) begin
 			// ldi, should be just a single state
-			$display("Should be there");
 			if(state == 1) begin
 				next_state = 0;
 			end else begin
@@ -82,14 +78,35 @@ module fsm_next #(parameter op_size = 16, parameter in_size = 8) (
 				next_state = 1;
 			end
 		end else if(cur_in[op_size - 1:op_size - in_size] == 8'b00001011) begin
-			// ld, has one state
+			// lds, has one state
 			if(state == 1) begin
 				next_state = 0;
 			end else begin
 				next_state = 1;
 			end
 		end else if(cur_in[op_size - 1:op_size - in_size] == 8'b00001100) begin
-			// st, has one state
+			// sts, has one state
+			if(state == 1) begin
+				next_state = 0;
+			end else begin
+				next_state = 1;
+			end
+		end else if(cur_in[op_size - 1:op_size - in_size] == 8'b00001101) begin
+			// cp, has three states
+			if(state < 3) begin
+				next_state = state + 1;
+			end else begin
+				next_state = 0;
+			end
+		end else if(cur_in[op_size - 1:op_size - in_size] == 8'b00001110) begin
+			// brsh, has one state
+			if(state == 1) begin
+				next_state = 0;
+			end else begin
+				next_state = 1;
+			end
+		end else if(cur_in[op_size - 1:op_size - in_size] == 8'b00001111) begin
+			// brlo, has one state
 			if(state == 1) begin
 				next_state = 0;
 			end else begin

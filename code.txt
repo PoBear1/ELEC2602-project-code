@@ -3,4 +3,11 @@ ldi r1 1
 mov r2 r0
 mov r3 r1
 add r3 r0
-sub r2 r1
+sub r1 r2
+cp r3 r2
+brsh 4
+inc r2
+inc r3
+sts 0 r2
+lds r2 0
+

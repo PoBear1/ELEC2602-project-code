@@ -35,7 +35,6 @@ module alu #(
 			status = neg_stat;	
 		end else if(alu_mode == 4) begin
 			out = not_x;
-			status = not_stat;	
 		end else if(alu_mode == 5) begin
 			out = inc_x;
 			status = inc_stat;	

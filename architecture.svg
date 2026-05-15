@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1120" height="560" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#1a1a2e"/>
+    </marker>
+    <marker id="arr-red" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto">
+      <polygon points="0 0, 7 2.5, 0 5" fill="#c0392b"/>
+    </marker>
+    <marker id="arr-blue" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto">
+      <polygon points="0 0, 7 2.5, 0 5" fill="#2e4053"/>
+    </marker>
+  </defs>
+  <style>
+    .box  { fill:#dce8fb; stroke:#2874a6; stroke-width:1.5; }
+    .bl   { font-family:Arial,sans-serif; font-size:12px; font-weight:bold; text-anchor:middle; fill:#1a1a2e; }
+    .sl   { font-family:Arial,sans-serif; font-size:9px;  text-anchor:middle; fill:#555; }
+    .gl   { font-family:Arial,sans-serif; font-size:8px;  fill:#444; }
+    .glr  { font-family:Arial,sans-serif; font-size:8px;  fill:#c0392b; }
+    .d    { stroke:#1a1a2e; stroke-width:1.5; fill:none; marker-end:url(#arr); }
+    .c    { stroke:#c0392b; stroke-width:1.2; fill:none; stroke-dasharray:5,3; marker-end:url(#arr-red); }
+    .inst { stroke:#2e4053; stroke-width:1.2; fill:none; stroke-dasharray:4,2; }
+  </style>
+
+  <!-- ═══ 16-BIT DATA BUS ═══ -->
+  <rect x="15" y="18" width="1090" height="28" rx="4" fill="#fadbd8" stroke="#c0392b" stroke-width="2"/>
+  <text x="560" y="37" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle" fill="#922b21">16-bit Data Bus</text>
+
+  <!-- ══════════════════════════════════════════════════════════
+       PC
+  ══════════════════════════════════════════════════════════ -->
+  <rect x="22" y="75" width="90" height="85" rx="3" class="box"/>
+  <text x="67" y="103" class="bl">PC</text>
+  <text x="67" y="117" class="sl">d_ff + add</text>
+  <text x="67" y="130" class="sl">jmp? bus : +1</text>
+  <text x="67" y="143" class="sl">→ pc_addr</text>
+  <!-- bus → PC  (jmp_offset read from bus when jmp_en) -->
+  <line x1="48" y1="46" x2="48" y2="75" class="d"/>
+  <text x="17" y="65" class="gl">jmp_offset</text>
+  <!-- PC output  →  routed below to pmem addr input -->
+  <line x1="67" y1="160" x2="67" y2="230" stroke="#1a1a2e" stroke-width="1.5" fill="none"/>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Instruction Memory  (pmem_block)
+  ══════════════════════════════════════════════════════════ -->
+  <rect x="142" y="65" width="122" height="95" rx="3" class="box"/>
+  <text x="203" y="93"  class="bl">Instruction</text>
+  <text x="203" y="107" class="bl">Memory</text>
+  <text x="203" y="122" class="sl">pmem_block (ROM)</text>
+  <text x="203" y="135" class="sl">$readmemb init</text>
+  <text x="203" y="148" class="sl">32-bit words</text>
+  <!-- pc_addr  :  PC bottom → right →  pmem addr (below component row) -->
+  <line x1="67"  y1="230" x2="203" y2="230" stroke="#1a1a2e" stroke-width="1.5" fill="none"/>
+  <line x1="203" y1="230" x2="203" y2="160" class="d"/>
+  <text x="112" y="225" class="gl">pc_addr [15:0]</text>
+  <!-- opcode [31:16]  →  dashed line down to FSM -->
+  <line x1="264" y1="87" x2="306" y2="87" class="inst"/>
+  <line x1="306" y1="87" x2="306" y2="415" class="inst"/>
+  <text x="268" y="80" class="gl">opcode</text>
+  <text x="268" y="89" class="gl">[31:16]</text>
+  <!-- imm [15:0]  →  down to DEMUX -->
+  <line x1="203" y1="160" x2="203" y2="258" class="d"/>
+  <text x="213" y="208" class="gl">imm [15:0]</text>
+
+  <!-- ══════════════════════════════════════════════════════════
+       DEMUX   (routes imm to either dmem_addr or to_data_bus)
+  ══════════════════════════════════════════════════════════ -->
+  <rect x="142" y="258" width="122" height="44" rx="3" class="box"/>
+  <text x="203" y="277" class="bl">DEMUX</text>
+  <text x="203" y="290" class="sl">sel = dmem_bus_sel</text>
+  <!-- path_0  →  dmem_addr  (long horizontal line at y=273, going to dmem address input) -->
+  <line x1="264" y1="273" x2="1018" y2="273" stroke="#1a1a2e" stroke-width="1" fill="none"/>
+  <line x1="1018" y1="273" x2="1018" y2="170" class="d" style="stroke-width:1"/>
+  <text x="560" y="268" class="gl">dmem_addr  (path_0, sel=0)  →  Data Memory address</text>
+  <!-- path_1  →  tri_buf below -->
+  <line x1="203" y1="302" x2="203" y2="330" class="d"/>
+  <text x="213" y="320" class="gl">path_1</text>
+
+  <!-- ══════════════════════════════════════════════════════════
+       tri_buf  (gates immediate value onto the data bus)
+  ══════════════════════════════════════════════════════════ -->
+  <rect x="142" y="330" width="122" height="40" rx="3" class="box"/>
+  <text x="203" y="348" class="bl">tri_buf</text>
+  <text x="203" y="361" class="sl">en = imm_data_en</text>
+  <!-- tri_buf output  →  bus  (routed up the left side) -->
+  <line x1="148" y1="330" x2="148" y2="46" class="d"/>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Register File  (reg_block, 16 × 16-bit)
+  ══════════════════════════════════════════════════════════ -->
+  <rect x="342" y="65" width="122" height="95" rx="3" class="box"/>
+  <text x="403" y="95"  class="bl">Register</text>
+  <text x="403" y="109" class="bl">File</text>
+  <text x="403" y="125" class="sl">16 × 16-bit  (R0–R15)</text>
+  <text x="403" y="138" class="sl">reg_block</text>
+  <text x="403" y="151" class="sl">tri_buf per register</text>
+  <!-- RF Dout → bus  (r_out enables tri_buf) -->
+  <line x1="415" y1="65" x2="415" y2="46" class="d"/>
+  <text x="419" y="61" class="gl">r_out</text>
+  <!-- bus → RF Din  (r_en latches bus) -->
+  <line x1="392" y1="46" x2="392" y2="65" class="d"/>
+  <text x="348" y="61" class="gl">r_en (Din)</text>
+
+  <!-- ══════════════════════════════════════════════════════════
+       A Register  (reg_unit, always drives alu_a)
+  ══════════════════════════════════════════════════════════ -->
+  <rect x="497" y="85" width="88" height="75" rx="3" class="box"/>
+  <text x="541" y="113" class="bl">A Reg</text>
+  <text x="541" y="128" class="sl">en = a_en</text>
+  <text x="541" y="141" class="sl">tri_buf always on</text>
+  <text x="541" y="154" class="sl">→ alu_a (fixed)</text>
+  <!-- bus → A_reg  (latch when a_en) -->
+  <line x1="541" y1="46" x2="541" y2="85" class="d"/>
+  <text x="546" y="69" class="gl">a_en</text>
+  <!-- A_reg → ALU  (alu_a, not on the bus) -->
+  <line x1="585" y1="120" x2="628" y2="120" class="d"/>
+  <text x="598" y="113" class="gl">alu_a</text>
+
+  <!-- ══════════════════════════════════════════════════════════
+       ALU
+  ══════════════════════════════════════════════════════════ -->
+  <rect x="628" y="65" width="112" height="108" rx="3" class="box"/>
+  <text x="684" y="92"  class="bl">ALU</text>
+  <text x="684" y="107" class="sl">a = alu_a</text>
+  <text x="684" y="119" class="sl">b = data_bus</text>
+  <text x="684" y="132" class="sl">add / neg / inc</text>
+  <text x="684" y="145" class="sl">dec / adc / not</text>
+  <text x="684" y="158" class="sl">mode = alu_mode</text>
+  <!-- bus → ALU.b -->
+  <line x1="660" y1="46" x2="660" y2="65" class="d"/>
+  <text x="665" y="60" class="gl">b</text>
+  <!-- ALU.out → G_reg -->
+  <line x1="740" y1="110" x2="780" y2="110" class="d"/>
+  <text x="749" y="103" class="gl">alu_out</text>
+  <!-- ALU.status → Status reg  (routed below ALU then right) -->
+  <line x1="684" y1="173" x2="684" y2="218" stroke="#1a1a2e" stroke-width="1" fill="none"/>
+  <line x1="684" y1="218" x2="780" y2="218" class="d" style="stroke-width:1"/>
+  <text x="718" y="213" class="gl">alu_stat [3:0]</text>
+
+  <!-- ══════════════════════════════════════════════════════════
+       G Register  (holds ALU result)
+  ══════════════════════════════════════════════════════════ -->
+  <rect x="780" y="85" width="88" height="58" rx="3" class="box"/>
+  <text x="824" y="111" class="bl">G Reg</text>
+  <text x="824" y="126" class="sl">g_en / g_out</text>
+  <text x="824" y="139" class="sl">ALU result buf</text>
+  <!-- G_reg → bus  (when g_out) -->
+  <line x1="824" y1="85" x2="824" y2="46" class="d"/>
+  <text x="829" y="69" class="gl">g_out</text>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Status Register   Z N C V
+  ══════════════════════════════════════════════════════════ -->
+  <rect x="780" y="208" width="88" height="72" rx="3" class="box"/>
+  <text x="824" y="232" class="bl">Status</text>
+  <text x="824" y="247" class="sl">[0]=Z  [1]=N</text>
+  <text x="824" y="260" class="sl">[2]=C  [3]=V</text>
+  <text x="824" y="273" class="sl">en = status_en</text>
+  <!-- Status.q → ALU  prev_stat (diagonal feedback) -->
+  <line x1="780" y1="225" x2="740" y2="173" class="d"/>
+  <text x="740" y="208" class="gl">prev_stat</text>
+  <!-- Status.q → FSM  (branch condition check) -->
+  <line x1="858" y1="280" x2="858" y2="415" class="inst"/>
+  <text x="862" y="355" class="gl">status [3:0]</text>
+  <text x="862" y="365" class="gl">→ FSM</text>
+
+  <!-- ══════════════════════════════════════════════════════════
+       Data Memory  (dmem, reg_block)
+  ══════════════════════════════════════════════════════════ -->
+  <rect x="902" y="65" width="122" height="95" rx="3" class="box"/>
+  <text x="963" y="95"  class="bl">Data</text>
+  <text x="963" y="109" class="bl">Memory</text>
+  <text x="963" y="125" class="sl">dmem (reg_block)</text>
+  <text x="963" y="138" class="sl">R/W via bus</text>
+  <text x="963" y="151" class="sl">addr = dmem_addr</text>
+  <!-- dmem Dout → bus  (dmem_out) -->
+  <line x1="975" y1="65" x2="975" y2="46" class="d"/>
+  <text x="979" y="61" class="gl">dmem_out</text>
+  <!-- bus → dmem Din  (dmem_en) -->
+  <line x1="952" y1="46" x2="952" y2="65" class="d"/>
+  <text x="907" y="61" class="gl">dmem_en</text>
+
+  <!-- ══════════════════════════════════════════════════════════
+       FSM CONTROLLER
+  ══════════════════════════════════════════════════════════ -->
+  <rect x="15" y="395" width="1090" height="78" rx="4" fill="#d5f5e3" stroke="#1e8449" stroke-width="2"/>
+  <text x="560" y="418" font-family="Arial" font-size="13" font-weight="bold" text-anchor="middle" fill="#1e8449">FSM Controller  (fsm_control)</text>
+  <text x="560" y="433" font-family="Arial" font-size="9" text-anchor="middle" fill="#555">fsm_next (combinational next-state)   ·   fsm_state_register (D flip-flop)   ·   fsm_output (combinational outputs)</text>
+  <text x="560" y="446" font-family="Arial" font-size="9" text-anchor="middle" fill="#555">Inputs: opcode[15:12] (instruction type) ,  state[3:0] ,  status[3:0]</text>
+  <text x="560" y="459" font-family="Arial" font-size="9" text-anchor="middle" fill="#555">Instructions: 0=ldi  1=mov  2=add  3=neg  4=sub  5=inc  6=dec  7=jmp  8=brne  9=breq  10=ld  11=st</text>
+  <text x="560" y="467" font-family="Arial" font-size="9" text-anchor="middle" fill="#555">Outputs: r_en/r_out · a_en · g_en/g_out · alu_mode[3:0] · status_en · dmem_en/dmem_out · pc_en/jmp_en · dmem_bus_sel · imm_data_en</text>
+
+  <!-- ── Control lines  FSM → components  (red dashed) ──-->
+  <!-- → PC -->
+  <line x1="58"  y1="395" x2="58"  y2="160" class="c"/>
+  <text x="17"  y="391" class="glr">pc_en, jmp_en</text>
+  <!-- → DEMUX -->
+  <line x1="196" y1="395" x2="196" y2="302" class="c"/>
+  <text x="142" y="391" class="glr">dmem_bus_sel</text>
+  <!-- → tri_buf -->
+  <line x1="174" y1="395" x2="174" y2="370" class="c"/>
+  <text x="110" y="375" class="glr">imm_data_en</text>
+  <!-- → Register File -->
+  <line x1="403" y1="395" x2="403" y2="160" class="c"/>
+  <text x="368" y="391" class="glr">r_en, r_out</text>
+  <!-- → A Reg -->
+  <line x1="520" y1="395" x2="520" y2="160" class="c"/>
+  <text x="523" y="391" class="glr">a_en</text>
+  <!-- → ALU -->
+  <line x1="700" y1="395" x2="700" y2="173" class="c"/>
+  <text x="703" y="391" class="glr">alu_mode</text>
+  <!-- → G Reg -->
+  <line x1="840" y1="395" x2="840" y2="143" class="c"/>
+  <text x="843" y="391" class="glr">g_en, g_out</text>
+  <!-- → Status -->
+  <line x1="820" y1="395" x2="820" y2="280" class="c"/>
+  <text x="756" y="391" class="glr">status_en</text>
+  <!-- → Data Memory -->
+  <line x1="963" y1="395" x2="963" y2="160" class="c"/>
+  <text x="966" y="391" class="glr">dmem_en, dmem_out</text>
+
+  <!-- opcode wire label at FSM -->
+  <text x="285" y="428" font-family="Arial" font-size="8" fill="#2e4053">← opcode [31:16]</text>
+  <!-- status wire label at FSM -->
+  <text x="861" y="428" font-family="Arial" font-size="8" fill="#2e4053">← status</text>
+
+  <!-- ── clk / rst note ── -->
+  <text x="20" y="494" font-family="Arial" font-size="10" fill="#666">clk, rst → all d_ff instances: PC, Register File, A Reg, G Reg, Status, Data Memory, FSM state register</text>
+
+  <!-- ── Legend ── -->
+  <line x1="710" y1="508" x2="742" y2="508" stroke="#1a1a2e" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="746" y="512" font-family="Arial" font-size="9" fill="#1a1a2e">Data path</text>
+  <line x1="820" y1="508" x2="852" y2="508" stroke="#c0392b" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#arr-red)"/>
+  <text x="856" y="512" font-family="Arial" font-size="9" fill="#c0392b">Control signal</text>
+  <line x1="940" y1="508" x2="972" y2="508" stroke="#2e4053" stroke-width="1.2" stroke-dasharray="4,2"/>
+  <text x="976" y="512" font-family="Arial" font-size="9" fill="#2e4053">Instruction / status path</text>
+</svg>
