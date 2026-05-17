@@ -8,7 +8,7 @@ module pmem_block #(
 );
     reg[opcode_size - 1:0] mem[0:mem_len - 1];
     initial begin
-        $readmemb("program.hex", mem);
+        $readmemb("assembly/program.hex", mem);
     end
     assign w = mem[addr];
 endmodule
