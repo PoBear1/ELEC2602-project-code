@@ -6,3 +6,4 @@ iverilog -o sim \
   fsm_control/*.v register_control/*.v alu/*.v full_processor/*.v \
   tb_processor.v
 ```
+Currently this repository only contains processor logic for a simple non-pipelined but also independent chip, with program memory preloaded from a ASCII binary file. 
