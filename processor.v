@@ -3,7 +3,7 @@ module processor #(
 	parameter num_regs = 16, 
 	parameter alu_modes = 4,
 	parameter in_size = 8,
-	parameter ptr_width = 14, 
+	parameter ptr_width = 12, 
 	parameter imm_l = 16,
 	parameter opcode_size = 16,
 	parameter instruction_size = opcode_size + imm_l,
