@@ -22,7 +22,7 @@ module tb_processor;
 
     reg clk, rst;
 
-    processor dut (
+    processor proc (
         .clock(clk),
         .reset(rst)
     );
@@ -77,15 +77,15 @@ module tb_processor;
         // Load program into pmem after $readmemh has initialised it.
         // All other initial blocks start at time 0; #1 ensures ordering.
         #1;
-        // dut.pmem.mem[0] = ldi(4'd0, 8'd10);
-        // dut.pmem.mem[1] = ldi(4'd1, 8'd5);
-        // dut.pmem.mem[2] = ldi(4'd2, 8'd3);
-        // dut.pmem.mem[3] = mov(4'd3, 4'd0);
-        // dut.pmem.mem[4] = add(4'd0, 4'd1);
-        // dut.pmem.mem[5] = add(4'd1, 4'd2);
-        // dut.pmem.mem[6] = sub(4'd0, 4'd2);
-        // dut.pmem.mem[7] = sub(4'd0, 4'd3);
-        // dut.pmem.mem[8] = 32'hFFFF_FFFF;   // undefined opcode → FSM stays idle
+        // proc.pmem.mem[0] = ldi(4'd0, 8'd10);
+        // proc.pmem.mem[1] = ldi(4'd1, 8'd5);
+        // proc.pmem.mem[2] = ldi(4'd2, 8'd3);
+        // proc.pmem.mem[3] = mov(4'd3, 4'd0);
+        // proc.pmem.mem[4] = add(4'd0, 4'd1);
+        // proc.pmem.mem[5] = add(4'd1, 4'd2);
+        // proc.pmem.mem[6] = sub(4'd0, 4'd2);
+        // proc.pmem.mem[7] = sub(4'd0, 4'd3);
+        // proc.pmem.mem[8] = 32'hFFFF_FFFF;   // undefined opcode → FSM stays idle
 
         repeat(4) @(posedge clk);
         rst = 0;
@@ -103,23 +103,23 @@ module tb_processor;
     // ---- Monitors ----
 
     // Show every bus change during active execution
-    always @(dut.data_bus) begin
-        if (!rst && dut.data_bus !== {16{1'bz}})
-            $display("[%0t]   bus = %0d (0x%04h)", $time, dut.data_bus, dut.data_bus);
+    always @(proc.data_bus) begin
+        if (!rst && proc.data_bus !== {16{1'bz}})
+            $display("[%0t]   bus = %0d (0x%04h)", $time, proc.data_bus, proc.data_bus);
     end
 
     // Announce start of each instruction; at negedge done the PC has not yet incremented
-    always @(negedge dut.done) begin
+    always @(negedge proc.done) begin
         if (!rst)
             $display("[%0t] -- executing PC=%0d : 0x%08h",
-                     $time, dut.pc_addr, dut.pmem.mem[dut.pc_addr]);
+                     $time, proc.pc_addr, proc.pmem.mem[proc.pc_addr]);
     end
 
     // Announce completion; at posedge done the PC has already incremented
-    always @(posedge dut.done) begin
+    always @(posedge proc.done) begin
         if (!rst)
             $display("[%0t] -- done  (was PC=%0d, next PC=%0d)",
-                     $time, dut.pc_addr - 1, dut.pc_addr);
+                     $time, proc.pc_addr - 1, proc.pc_addr);
     end
 
 endmodule

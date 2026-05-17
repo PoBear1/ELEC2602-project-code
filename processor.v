@@ -3,19 +3,23 @@ module processor #(
 	parameter num_regs = 16, 
 	parameter alu_modes = 4,
 	parameter in_size = 8,
-	parameter N = 8,
-	parameter imm_l = N,
-	parameter opcode_size = 16 + N,
-	parameter mem_len = 1 << imm_l
+	parameter ptr_width = 14, 
+	parameter imm_l = 16,
+	parameter opcode_size = 16,
+	parameter instruction_size = opcode_size + imm_l,
+	parameter mem_len = 1 << ptr_width
 ) (
 	input clock,
-	input reset
+	input reset,
+	output[3:0] observable_pc,
+	output[3:0] observable_state,
+	output[3:0] observable_opcode
 );
-	wire[N - 1:0] data_bus, alu_a, alu_out, to_data_bus;
+	wire[imm_l - 1:0] data_bus, alu_a, alu_out, to_data_bus;
 	wire[15:0] opcode;
 	wire[imm_l - 1:0] imm; 
-	wire[imm_l - 1:0] dmem_addr, pc_addr;
-	wire[opcode_size - 1:0] cur_instruction;
+	wire[ptr_width - 1:0] dmem_addr, pc_addr;
+	wire[instruction_size - 1:0] cur_instruction;
 	wire[3:0] fsm_state;
 	wire a_en;
 	wire g_en, g_out;
@@ -29,11 +33,14 @@ module processor #(
 	wire dmem_bus_sel, imm_data_en;
 	wire done;
 
+	assign observable_state = fsm_state;
+	assign observable_pc = pc_addr[3:0];
+
 	// dmem
 	reg_block #(
-		.n(imm_l),
+		.n(ptr_width),
 		.regs(mem_len),
-		.N(N)
+		.N(imm_l)
 	) dmem(
 		.d(data_bus),
 		.clk(clock),
@@ -45,8 +52,8 @@ module processor #(
 
 	// pmem
 	pmem_block #(
-		.imm_l(imm_l),
-		.opcode_size(opcode_size),
+		.ptr_width(ptr_width),
+		.opcode_size(instruction_size),
 		.mem_len(mem_len)
 	) pmem(
 		.addr(pc_addr),
@@ -54,18 +61,19 @@ module processor #(
 	);
 
 	// opcode/imm wires
-	assign opcode = cur_instruction[opcode_size - 1:imm_l]; 
+	assign opcode = cur_instruction[instruction_size - 1:imm_l]; 
 	assign imm = cur_instruction[imm_l - 1:0];
+	assign observable_opcode = opcode[3:0];
 
 	// demux imm to either bus or dmem
-	demux #(.N(N)) demuxer(
+	demux #(.N(imm_l)) demuxer(
 		.in(imm),
 		.sel(dmem_bus_sel),
 		.path_0(dmem_addr),
 		.path_1(to_data_bus)
 	);
 
-	tri_buf #(.N(N)) demux_buf(
+	tri_buf #(.N(imm_l)) demux_buf(
 		.a(to_data_bus),
 		.en(imm_data_en),
 		.b(data_bus)
@@ -73,7 +81,7 @@ module processor #(
 
 	// program counter
 	pc #(
-		.N(imm_l)
+		.N(ptr_width)
 	) pc_reg(
 		.clk(clock),
 		.rst(reset),
@@ -87,7 +95,7 @@ module processor #(
 	reg_block #(
 		.n(block),
 		.regs(num_regs),
-		.N(N)
+		.N(imm_l)
 	) registers(
 		.d(data_bus),
 		.clk(clock),
@@ -98,7 +106,7 @@ module processor #(
 	);
 
 	reg_unit #(
-		.N(N)
+		.N(imm_l)
 	) A_reg(
 		.d(data_bus),
 		.clk(clock),
@@ -109,7 +117,7 @@ module processor #(
 	);
 
 	reg_unit #(
-		.N(N)
+		.N(imm_l)
 	) G_reg(
 		.d(alu_out),
 		.clk(clock),
@@ -121,7 +129,7 @@ module processor #(
 
 	// status register
 	status_reg #(
-		.N(8)
+		.N(4)
 	) stat_reg(
 		.d(alu_stat),
 		.clk(clock),
@@ -129,12 +137,12 @@ module processor #(
 		.reg_en(status_en),
 		.reg_rst(reset),
 		.q(stat_in),
-		.w(data_bus)
+		.w(data_bus[3:0])
 	);
 
 	// alu
 	alu #(
-		.N(N), 
+		.N(imm_l), 
 		.modes(alu_modes)
 	) calculator(
 		.a(alu_a),
@@ -149,9 +157,9 @@ module processor #(
 	fsm_control #(
 		.block(block),
 		.alu_modes(alu_modes),
-		.opcode_size(16),
+		.opcode_size(opcode_size),
 		.in_size(in_size),
-		.N(N)
+		.N(imm_l)
 	) controller(
 		.clock(clock),
 		.rst(reset),
