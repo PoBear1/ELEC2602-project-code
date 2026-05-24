@@ -14,6 +14,9 @@ module processor #(
 	output[3:0] observable_pc,
 	output[3:0] observable_state,
 	output[3:0] observable_opcode
+	output[imm_l - 1:0] observable_r0,
+	output[imm_l - 1:0] observable_r1,
+	output[imm_l - 1:0] observable_r2
 );
 	wire[imm_l - 1:0] data_bus, alu_a, alu_out, to_data_bus;
 	wire[15:0] opcode;
@@ -102,9 +105,11 @@ module processor #(
 		.reg_tri({reg_tri, reg_num_tri}),
 		.reg_en({reg_en, reg_num_en}),
 		.reg_rst(reset),
-		.w(data_bus)
+		.w(data_bus),
+		.r0(observable_r0),
+		.r1(observable_r1),
+		.r2(observable_r2)
 	);
-
 	reg_unit #(
 		.N(imm_l)
 	) A_reg(
