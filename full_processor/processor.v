@@ -1,5 +1,6 @@
 module processor #(
 	parameter block = 4,
+	parameter state_s = 4,
 	parameter num_regs = 16, 
 	parameter alu_modes = 4,
 	parameter in_size = 8,
@@ -23,7 +24,7 @@ module processor #(
 	wire[imm_l - 1:0] imm; 
 	wire[ptr_width - 1:0] dmem_addr, pc_addr;
 	wire[instruction_size - 1:0] cur_instruction;
-	wire[3:0] fsm_state;
+	wire[state_s - 1:0] fsm_state;
 	wire a_en;
 	wire g_en, g_out;
 	wire dmem_en, dmem_out;
@@ -36,7 +37,7 @@ module processor #(
 	wire dmem_bus_sel, imm_data_en;
 	wire done;
 
-	assign observable_state = fsm_state;
+	assign observable_state = fsm_state[3:0];
 	assign observable_pc = pc_addr[3:0];
 
 	// dmem
@@ -160,6 +161,7 @@ module processor #(
 
 	// controller
 	fsm_control #(
+		.state_s(state_s)
 		.block(block),
 		.alu_modes(alu_modes),
 		.opcode_size(opcode_size),

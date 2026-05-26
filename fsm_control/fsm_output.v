@@ -4,10 +4,11 @@ module fsm_output #(
 	parameter in_size = 8,
 	parameter alu_modes = 4,
 	parameter N = 16,
-	parameter imm_l = 16
+	parameter imm_l = 16,
+	parameter state_s = 4
 ) (
 	input[op_size - 1:0] cur_in,
-	input[3:0] state,
+	input[state_s - 1:0] state,
 	input[3:0] status,
 	output reg[block:0] r_en,
 	output reg[block:0] r_out,

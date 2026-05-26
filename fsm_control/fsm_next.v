@@ -1,9 +1,9 @@
 // status[0] = Z (zero), status[1] = N (negative), status[2] = C (carry), status[3] = V (overflow)
-module fsm_next #(parameter op_size = 16, parameter in_size = 8) (
-	input[3:0] state,
+module fsm_next #(parameter op_size = 16, parameter in_size = 8, parameter state_s = 4) (
+	input[state_s - 1:0] state,
 	input[3:0] status,
 	input[op_size - 1:0] cur_in,
-	output reg[3:0] next_state
+	output reg[state_s - 1:0] next_state
 );
 	always @(cur_in, state, status) begin
 		next_state = 0;

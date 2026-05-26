@@ -4,14 +4,15 @@ module fsm_control #(
 	parameter opcode_size = 16,
 	parameter in_size = 8,
 	parameter N = 16,
-	parameter imm_l = 16
+	parameter imm_l = 16,
+	parameter state_s = 4
 ) (
 	input clock,
 	input rst,
 	input en,
 	input[opcode_size - 1:0] cur_instruction,
 	input[3:0] status,
-	output[3:0] state,
+	output[state_s - 1:0] state,
 	output[block:0] r_en,
 	output[block:0] r_out,
 	output a_en,
@@ -29,20 +30,27 @@ module fsm_control #(
 	output done
 );
 	wire[3:0] next_state;
-	fsm_next #(.op_size(opcode_size), .in_size(in_size)) next (
+	fsm_next #(.op_size(opcode_size), .in_size(in_size), .state_s(state_s)) next (
 		.state(state),
 		.status(status),
 		.cur_in(cur_instruction),
 		.next_state(next_state)
 	);
-	fsm_state_register store(
+	fsm_state_register #(.state_s(state_s)) store(
 		.clock(clock),
 		.rst(rst),
 		.enable(en),
 		.next_state(next_state),
 		.state(state)
 	);
-	fsm_output #(.block(block), .op_size(opcode_size), .in_size(in_size), .alu_modes(alu_modes), .N(N), .imm_l(imm_l)) out(
+	fsm_output #(
+		.block(block), 
+		.op_size(opcode_size), 
+		.in_size(in_size), 
+		.alu_modes(alu_modes), 
+		.N(N), .imm_l(imm_l), 
+		.state_s(state_s)
+	) out(
 		.cur_in(cur_instruction),
 		.status(status),
 		.state(state),
